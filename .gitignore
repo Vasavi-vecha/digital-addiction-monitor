@@ -1,0 +1,28 @@
+# Python (ml-service)
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Java / Maven (backend)
+target/
+
+# Android (android-app)
+build/
+.gradle/
+local.properties
+
+# IDE
+.idea/
+.vscode/
+
+# Large model binaries -- regenerate with train.py
+*.joblib
+
+# Large synthetic training data -- regenerate with data/generator.py
+ml-service/data/usage_logs.csv
+ml-service/data/weekly_features.csv
+
+# Runtime DB files
+backend/data/*.db
+backend/data/*.lock.db

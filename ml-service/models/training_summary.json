@@ -1,0 +1,35 @@
+{
+  "focus_winner": "RandomForest",
+  "focus_accuracy": {
+    "RandomForest": 0.9330531587727295,
+    "GradientBoosting": 0.9320280376306462
+  },
+  "risk_winner": "Ridge",
+  "risk_rmse": {
+    "LinearRegression": 7.089394600150568,
+    "Ridge": 6.999537446294865,
+    "RandomForestRegressor": 7.1667934436300404,
+    "GradientBoosting": 7.599988517192865
+  },
+  "risk_mae": {
+    "LinearRegression": 5.68246853460744,
+    "Ridge": 5.64272087531594,
+    "RandomForestRegressor": 5.716452882171435,
+    "GradientBoosting": 6.084772226432309
+  },
+  "risk_r2": {
+    "LinearRegression": 0.7033197197861487,
+    "Ridge": 0.7107928252853195,
+    "RandomForestRegressor": 0.6968063120320855,
+    "GradientBoosting": 0.6590456368034819
+  },
+  "risk_tolerance_accuracy_pm5": {
+    "LinearRegression": 0.5106666666666667,
+    "Ridge": 0.5053333333333333,
+    "RandomForestRegressor": 0.5093333333333333,
+    "GradientBoosting": 0.49266666666666664
+  },
+  "cluster_operating_k": 4,
+  "cluster_silhouette_best_k": 2,
+  "cluster_ari": 0.6454660747891593
+}
