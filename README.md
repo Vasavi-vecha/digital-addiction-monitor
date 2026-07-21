@@ -1,10 +1,10 @@
 # Digital Addiction Monitor
 
-Digital Addiction Monitor tracks how you actually use your phone and scores "addiction risk" against
-your *own* historical baseline instead of a generic screen-time limit. An Android client collects
-real per-app usage sessions, a Spring Boot backend persists and aggregates them, and a Python ML
-service turns that history into a risk score, a behavioral persona, and personalized suggestions
-that a native dashboard renders on-device.
+Digital Addiction Monitor tracks how a user actually uses their phone and scores "addiction risk"
+against their *own* historical baseline instead of a generic screen-time limit. A Spring Boot
+backend persists and aggregates usage-session data, and a Python ML service turns that history into
+a risk score, a behavioral persona, and personalized suggestions. There is currently no frontend
+client in this repo — see "What's novel" below for the product thesis these two services implement.
 
 ## Components
 
@@ -12,17 +12,16 @@ that a native dashboard renders on-device.
 |-------------|----------------|---------------------------------|------|
 | ML service  | `ml-service/`  | Python, FastAPI, scikit-learn   | 8000 |
 | Backend     | `backend/`     | Java 17, Spring Boot, Maven, H2 | 8080 |
-| Android app | `android-app/` | Kotlin, Jetpack Compose         | —    |
 
 ## Prerequisites
 
 - Java 17
 - Python 3.11
-- Android Studio (with an Android SDK and a physical device or emulator)
 
 ## Running it
 
-Start the three components in order: ML service, then backend, then the app.
+Start the ML service first, then the backend — the backend calls out to the ML service on every
+dashboard request.
 
 ### 1. ML service (port 8000)
 
@@ -44,22 +43,8 @@ mvn spring-boot:run
 ```
 
 The backend expects the ML service at `http://localhost:8000` by default (override with the
-`ML_SERVICE_URL` env var).
-
-### 3. Android app
-
-```
-cd android-app
-```
-
-Open the folder in Android Studio, connect a physical device over USB with debugging enabled, and
-run the app. Before the app can reach the backend, forward the device's localhost to your machine:
-
-```
-adb reverse tcp:8080 tcp:8080
-```
-
-This needs to be re-run each new debug session — it doesn't persist across reboots or reconnects.
+`ML_SERVICE_URL` env var). With both running, `POST /api/logs/sync` and `GET /api/dashboard/{userId}`
+on `localhost:8080` are ready to take usage-log data from any client.
 
 ## What's novel
 
