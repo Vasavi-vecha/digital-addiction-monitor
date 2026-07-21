@@ -29,6 +29,22 @@ public class MlAnalyzeWeeklyResponse {
         // Jackson
     }
 
+    public MlAnalyzeWeeklyResponse(
+            String userId,
+            int weekIndex,
+            double riskScore,
+            String clusterPersona,
+            List<MlBehaviouralDriverDto> topDrivers,
+            List<MlWeekOverWeekDeltaDto> weekOverWeekDeltas
+    ) {
+        this.userId = userId;
+        this.weekIndex = weekIndex;
+        this.riskScore = riskScore;
+        this.clusterPersona = clusterPersona;
+        this.topDrivers = topDrivers;
+        this.weekOverWeekDeltas = weekOverWeekDeltas;
+    }
+
     public String getUserId() {
         return userId;
     }

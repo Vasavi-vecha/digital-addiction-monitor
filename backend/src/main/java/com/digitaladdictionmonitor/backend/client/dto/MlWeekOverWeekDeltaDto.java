@@ -20,6 +20,13 @@ public class MlWeekOverWeekDeltaDto {
         // Jackson
     }
 
+    public MlWeekOverWeekDeltaDto(String metric, double currentValue, double previousValue, double pctChange) {
+        this.metric = metric;
+        this.currentValue = currentValue;
+        this.previousValue = previousValue;
+        this.pctChange = pctChange;
+    }
+
     public String getMetric() {
         return metric;
     }

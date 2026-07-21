@@ -11,6 +11,12 @@ public class MlBehaviouralDriverDto {
         // Jackson
     }
 
+    public MlBehaviouralDriverDto(String metric, String description, double zscore) {
+        this.metric = metric;
+        this.description = description;
+        this.zscore = zscore;
+    }
+
     public String getMetric() {
         return metric;
     }
