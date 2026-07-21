@@ -9,22 +9,27 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     /**
-     * Targets a real device over USB: run `adb reverse tcp:8080 tcp:8080`
-     * once per debug session first, which makes the device's own
-     * localhost:8080 forward to the host PC's localhost:8080 where the
-     * Spring Boot backend runs.
+     * Targets the backend over WiFi -- both this phone and the laptop
+     * running `mvn spring-boot:run` must be on the same WiFi network.
      *
-     * If this ever moves back to an Android *emulator* instead of a real
-     * device, change this to "http://10.0.2.2:8080/" -- that's the
-     * emulator's special alias for the host's localhost, and `adb reverse`
-     * doesn't apply there (the emulator has its own virtual network).
+     * TODO before running: replace 192.168.1.100 below with your laptop's
+     * actual WiFi IPv4 address. Find it with:
+     *   Windows:      ipconfig            -> "Wireless LAN adapter Wi-Fi" -> IPv4 Address
+     *   macOS/Linux:  ifconfig | ipconfig getifaddr en0
+     * This address can change each time the laptop reconnects to WiFi
+     * (unless the router assigns a static/reserved IP), so re-check it if
+     * the app suddenly can't reach the backend.
+     *
+     * Two other options, only if you're not on the same WiFi:
+     *  - USB + `adb reverse tcp:8080 tcp:8080`, then use "http://localhost:8080/"
+     *  - Android *emulator* (not a real device): "http://10.0.2.2:8080/"
      *
      * Cleartext (non-HTTPS) is allowed for this local-dev target via
      * android:usesCleartextTraffic in the manifest -- fine for a local
      * backend during development, not for a shipped app talking to a real
      * server.
      */
-    private const val BASE_URL = "http://localhost:8080/"
+    private const val BASE_URL = "http://192.168.1.100:8080/"
 
     val api: BackendApi by lazy {
         val logging = HttpLoggingInterceptor().apply {

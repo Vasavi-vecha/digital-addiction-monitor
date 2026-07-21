@@ -46,22 +46,39 @@ mvn spring-boot:run
 The backend expects the ML service at `http://localhost:8000` by default (override with the
 `ML_SERVICE_URL` env var).
 
-### 3. Android app
+### 3. Android app (WiFi, no cable needed once installed)
 
-```
-cd android-app
-```
+The app talks to the backend over plain HTTP, so the simplest way to demo it is to have the phone
+and the laptop running ml-service + backend on the same WiFi network — no cloud hosting, no
+ongoing USB connection.
 
-Open the folder in Android Studio, connect a physical device over USB with debugging enabled, and
-run the app. Before the app can reach the backend, forward the device's localhost to your machine:
+1. **Find your laptop's WiFi IP address.**
+   - Windows: run `ipconfig`, look for "Wireless LAN adapter Wi-Fi" → IPv4 Address (e.g. `192.168.1.23`).
+   - macOS/Linux: `ipconfig getifaddr en0` (or `ifconfig`).
+2. **Put that IP into the app.** Open
+   `android-app/app/src/main/java/com/example/digitaladdictionmonitor/network/RetrofitClient.kt`
+   and replace the placeholder in `BASE_URL` with your real IP:
+   ```
+   private const val BASE_URL = "http://192.168.1.23:8080/"
+   ```
+   This address can change if the laptop reconnects to WiFi (unless the router assigns a static
+   IP), so re-check it if the app suddenly can't reach the backend.
+3. Open the `android-app` folder in Android Studio and let Gradle sync.
+4. Make sure the phone is on the **same WiFi network** as the laptop.
+5. Connect the phone over USB **just once**, to install the app (enable Developer Options + USB
+   Debugging on the phone first: Settings → About phone → tap "Build number" 7 times → Developer
+   options → USB debugging).
+6. Run the app from Android Studio (green ▶ button) with the phone selected as target.
+7. Once installed and open, **the USB cable can be unplugged** — the app reaches the backend over
+   WiFi using the IP from step 2, not the cable.
 
-```
-adb reverse tcp:8080 tcp:8080
-```
+If Windows Firewall prompts to allow the Java process on port 8080, click **Allow**, or the phone's
+requests will be silently blocked.
 
-This needs to be re-run each new debug session — it doesn't persist across reboots or reconnects.
-An emulator can be used instead of a physical device, but requires the emulator to have enough RAM
-to boot reliably; if it gets stuck at `offline` in `adb devices`, use a physical device instead.
+**Alternative (USB tether instead of WiFi):** connect over USB and run
+`adb reverse tcp:8080 tcp:8080` (needs re-running each debug session), with `BASE_URL` set to
+`http://localhost:8080/` instead. An emulator can be used instead of a physical device, but needs
+enough RAM to boot reliably — if it gets stuck at `offline` in `adb devices`, use a physical device.
 
 ## What's novel
 
