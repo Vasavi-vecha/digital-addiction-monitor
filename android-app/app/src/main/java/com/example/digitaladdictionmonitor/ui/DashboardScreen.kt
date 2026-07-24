@@ -3,21 +3,29 @@ package com.example.digitaladdictionmonitor.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -26,6 +34,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,8 +43,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,17 +56,14 @@ import androidx.compose.ui.unit.dp
 import com.example.digitaladdictionmonitor.model.BaselineDeltaDto
 import com.example.digitaladdictionmonitor.model.DashboardResponse
 import com.example.digitaladdictionmonitor.model.SuggestionDto
+import com.example.digitaladdictionmonitor.ui.theme.CautionColor
+import com.example.digitaladdictionmonitor.ui.theme.CautionContainer
+import com.example.digitaladdictionmonitor.ui.theme.ConcernColor
+import com.example.digitaladdictionmonitor.ui.theme.ConcernContainer
+import com.example.digitaladdictionmonitor.ui.theme.GoodColor
+import com.example.digitaladdictionmonitor.ui.theme.GoodContainer
+import com.example.digitaladdictionmonitor.ui.theme.SuggestionAccentColors
 import kotlin.math.roundToInt
-
-// Fixed semantic colors for risk severity -- deliberately not theme-derived,
-// so "this is good" / "this needs attention" reads the same regardless of
-// the device's Material You palette.
-private val GoodColor = Color(0xFF2E7D32)
-private val GoodContainer = Color(0xFFE8F5E9)
-private val CautionColor = Color(0xFFB26A00)
-private val CautionContainer = Color(0xFFFFF3DC)
-private val ConcernColor = Color(0xFFC62828)
-private val ConcernContainer = Color(0xFFFFEBEE)
 
 private enum class Severity(val label: String, val color: Color, val container: Color) {
     GOOD("Doing great", GoodColor, GoodContainer),
@@ -124,10 +135,17 @@ private fun isWorsening(metric: String, pctChange: Double): Boolean = when (metr
     else -> pctChange > 0
 }
 
+private enum class DashboardTab(val label: String) {
+    OVERVIEW("Overview"),
+    RISK("Risk Level"),
+    SUGGESTIONS("Suggestions"),
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel) {
     val uiState by viewModel.uiState.collectAsState()
+    var selectedTab by rememberSaveable { mutableStateOf(DashboardTab.OVERVIEW) }
 
     Scaffold(
         topBar = {
@@ -139,6 +157,11 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
                     }
                 }
             )
+        },
+        bottomBar = {
+            if (uiState is DashboardUiState.Loaded) {
+                DashboardBottomBar(selected = selectedTab, onSelect = { selectedTab = it })
+            }
         }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -154,9 +177,37 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
                     message = state.message,
                     onRetryClick = { viewModel.syncAndRefresh() }
                 )
-                is DashboardUiState.Loaded -> DashboardContent(state.dashboard, state.statusMessage)
+                is DashboardUiState.Loaded -> when (selectedTab) {
+                    DashboardTab.OVERVIEW -> OverviewTab(state.dashboard, state.statusMessage)
+                    DashboardTab.RISK -> RiskLevelTab(state.dashboard)
+                    DashboardTab.SUGGESTIONS -> SuggestionsTab(state.dashboard)
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun DashboardBottomBar(selected: DashboardTab, onSelect: (DashboardTab) -> Unit) {
+    NavigationBar {
+        NavigationBarItem(
+            selected = selected == DashboardTab.OVERVIEW,
+            onClick = { onSelect(DashboardTab.OVERVIEW) },
+            icon = { Icon(Icons.Filled.Home, contentDescription = null) },
+            label = { Text(DashboardTab.OVERVIEW.label) }
+        )
+        NavigationBarItem(
+            selected = selected == DashboardTab.RISK,
+            onClick = { onSelect(DashboardTab.RISK) },
+            icon = { Icon(Icons.Filled.Shield, contentDescription = null) },
+            label = { Text(DashboardTab.RISK.label) }
+        )
+        NavigationBarItem(
+            selected = selected == DashboardTab.SUGGESTIONS,
+            onClick = { onSelect(DashboardTab.SUGGESTIONS) },
+            icon = { Icon(Icons.Filled.Lightbulb, contentDescription = null) },
+            label = { Text(DashboardTab.SUGGESTIONS.label) }
+        )
     }
 }
 
@@ -171,7 +222,7 @@ private fun PermissionNeededContent(onGrantClick: () -> Unit) {
         Spacer(Modifier.height(8.dp))
         Text(
             "This app needs permission to see which apps you use, so it can show you your " +
-                "own habits. Nothing leaves your phone except what you choose to sync.",
+                    "own habits. Nothing leaves your phone except what you choose to sync.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center
         )
@@ -221,8 +272,10 @@ private fun ErrorContent(message: String, onRetryClick: () -> Unit) {
     }
 }
 
+// --- Page 1: Overview ------------------------------------------------------
+
 @Composable
-private fun DashboardContent(dashboard: DashboardResponse, statusMessage: String?) {
+private fun OverviewTab(dashboard: DashboardResponse, statusMessage: String?) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -231,22 +284,14 @@ private fun DashboardContent(dashboard: DashboardResponse, statusMessage: String
         if (statusMessage != null) {
             item { Text(statusMessage, style = MaterialTheme.typography.bodySmall) }
         }
-        item { RiskStatusCard(dashboard) }
+        item { RiskSummaryCard(dashboard) }
         item { FocusMetricsCard(dashboard) }
         item { CategoryTotalsCard(dashboard.weeklyCategoryTotalsMinutes) }
-        if (dashboard.baselineDeltas.isNotEmpty()) {
-            item { SectionHeader("Compared to your own last 4 weeks") }
-            items(dashboard.baselineDeltas) { delta -> BaselineDeltaRow(delta) }
-        }
-        if (dashboard.suggestions.isNotEmpty()) {
-            item { SectionHeader("A few things you could try") }
-            items(dashboard.suggestions) { suggestion -> SuggestionCard(suggestion) }
-        }
     }
 }
 
 @Composable
-private fun RiskStatusCard(dashboard: DashboardResponse) {
+private fun RiskSummaryCard(dashboard: DashboardResponse) {
     val severity = severityFor(dashboard.riskScore)
     val (trendArrow, trendLabel, trendColor) = friendlyTrend(dashboard.trendDirection)
 
@@ -355,6 +400,109 @@ private fun SectionHeader(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
 }
 
+// --- Page 2: Risk Level ------------------------------------------------------
+
+@Composable
+private fun RiskLevelTab(dashboard: DashboardResponse) {
+    val severity = severityFor(dashboard.riskScore)
+    val (trendArrow, trendLabel, trendColor) = friendlyTrend(dashboard.trendDirection)
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = severity.container)
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text("Your risk level", style = MaterialTheme.typography.titleMedium, color = severity.color)
+                    Spacer(Modifier.height(8.dp))
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            dashboard.riskScore.roundToInt().toString(),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = severity.color
+                        )
+                        Text(
+                            " / 100",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = severity.color,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+                    Text(
+                        severity.label,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = severity.color,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    RiskGauge(score = dashboard.riskScore)
+                    Spacer(Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        GaugeLegendDot("Good", GoodColor)
+                        GaugeLegendDot("Caution", CautionColor)
+                        GaugeLegendDot("Concern", ConcernColor)
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PersonaChip(friendlyPersona(dashboard.clusterPersona), severity.color)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "$trendArrow $trendLabel",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = trendColor,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+        if (dashboard.baselineDeltas.isNotEmpty()) {
+            item { SectionHeader("Compared to your own last 4 weeks") }
+            items(dashboard.baselineDeltas) { delta -> BaselineDeltaRow(delta) }
+        }
+    }
+}
+
+@Composable
+private fun GaugeLegendDot(label: String, color: Color) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(modifier = Modifier.width(8.dp).height(8.dp).background(color, CircleShape))
+        Spacer(Modifier.width(4.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+// Gradient track spanning the same 0-35 / 35-65 / 65-100 bands severityFor()
+// uses, with a marker at the current score so the color story and the
+// number agree.
+@Composable
+private fun RiskGauge(score: Double) {
+    val fraction = (score / 100.0).toFloat().coerceIn(0f, 1f)
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth().height(20.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(listOf(GoodColor, CautionColor, ConcernColor)),
+                    RoundedCornerShape(10.dp)
+                )
+        )
+        Box(
+            modifier = Modifier
+                .offset(x = (maxWidth * fraction) - 2.dp)
+                .width(4.dp)
+                .fillMaxHeight()
+                .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(2.dp))
+        )
+    }
+}
+
 @Composable
 private fun BaselineDeltaRow(delta: BaselineDeltaDto) {
     val worsening = isWorsening(delta.metric, delta.pctChange)
@@ -382,21 +530,81 @@ private fun BaselineDeltaRow(delta: BaselineDeltaDto) {
     }
 }
 
+// --- Page 3: Suggestions ------------------------------------------------------
+
 @Composable
-private fun SuggestionCard(suggestion: SuggestionDto) {
+private fun SuggestionsTab(dashboard: DashboardResponse) {
+    if (dashboard.suggestions.isEmpty()) {
+        EmptySuggestionsContent()
+        return
+    }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item { Text("A few things you could try", style = MaterialTheme.typography.titleMedium) }
+        itemsIndexed(dashboard.suggestions) { index, suggestion ->
+            SuggestionCard(suggestion, rank = index + 1)
+        }
+    }
+}
+
+@Composable
+private fun EmptySuggestionsContent() {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Icon(
+            Icons.Filled.Lightbulb,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(Modifier.height(8.dp))
+        Text("Nothing to flag right now", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(4.dp))
+        Text(
+            "Your habits look steady. Check back after your next sync.",
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+// Suggestions arrive already ranked by expectedImpact (backend's
+// SuggestionEngine); rank drives the accent color/badge rather than
+// exposing the raw z-score, which wouldn't mean anything to a user.
+@Composable
+private fun SuggestionCard(suggestion: SuggestionDto, rank: Int) {
+    val accent = SuggestionAccentColors[(rank - 1).coerceIn(0, SuggestionAccentColors.lastIndex)]
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .height(8.dp)
-                    .width(8.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape)
-            )
-            Spacer(Modifier.width(12.dp))
-            Text(suggestion.message, style = MaterialTheme.typography.bodyMedium)
+        Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            Box(modifier = Modifier.width(6.dp).fillMaxHeight().background(accent))
+            Row(
+                modifier = Modifier.padding(16.dp).weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(shape = CircleShape, color = accent.copy(alpha = 0.15f)) {
+                    Text(
+                        rank.toString(),
+                        modifier = Modifier.padding(8.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = accent,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    suggestion.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
