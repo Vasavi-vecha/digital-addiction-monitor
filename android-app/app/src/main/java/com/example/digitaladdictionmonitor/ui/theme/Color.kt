@@ -11,3 +11,13 @@ val CautionColor = Color(0xFFB26A00)
 val CautionContainer = Color(0xFFFFF3DC)
 val ConcernColor = Color(0xFFC62828)
 val ConcernContainer = Color(0xFFFFEBEE)
+
+// Accent colors for ranked suggestion cards, indexed by (rank - 1).
+// Deliberately distinct from the severity colors above -- rank is about
+// expectedImpact ordering, not good/bad, so reusing Good/Caution/Concern
+// would misleadingly imply severity.
+val SuggestionAccentColors = listOf(
+    Color(0xFF6A4C93),
+    Color(0xFF1E88E5),
+    Color(0xFF00897B),
+)
