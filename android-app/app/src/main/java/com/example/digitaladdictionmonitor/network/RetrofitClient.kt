@@ -29,7 +29,7 @@ object RetrofitClient {
      * backend during development, not for a shipped app talking to a real
      * server.
      */
-    private const val BASE_URL = "http://192.168.1.100:8080/"
+    private const val BASE_URL = "http://localhost:8080/"
 
     val api: BackendApi by lazy {
         val logging = HttpLoggingInterceptor().apply {

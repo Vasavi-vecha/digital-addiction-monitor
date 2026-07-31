@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lightbulb
@@ -56,6 +57,9 @@ import androidx.compose.ui.unit.dp
 import com.example.digitaladdictionmonitor.model.BaselineDeltaDto
 import com.example.digitaladdictionmonitor.model.DashboardResponse
 import com.example.digitaladdictionmonitor.model.SuggestionDto
+import com.example.digitaladdictionmonitor.ui.components.AppLogo
+import com.example.digitaladdictionmonitor.ui.theme.BrandGradientEnd
+import com.example.digitaladdictionmonitor.ui.theme.BrandGradientStart
 import com.example.digitaladdictionmonitor.ui.theme.CautionColor
 import com.example.digitaladdictionmonitor.ui.theme.CautionContainer
 import com.example.digitaladdictionmonitor.ui.theme.ConcernColor
@@ -150,7 +154,13 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Your Digital Wellbeing") },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        AppLogo(size = 28.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text("Digital Wellbeing")
+                    }
+                },
                 actions = {
                     IconButton(onClick = { viewModel.syncAndRefresh() }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
@@ -281,12 +291,46 @@ private fun OverviewTab(dashboard: DashboardResponse, statusMessage: String?) {
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item { HomeHeroHeader() }
         if (statusMessage != null) {
             item { Text(statusMessage, style = MaterialTheme.typography.bodySmall) }
         }
         item { RiskSummaryCard(dashboard) }
         item { FocusMetricsCard(dashboard) }
         item { CategoryTotalsCard(dashboard.weeklyCategoryTotalsMinutes) }
+    }
+}
+
+// Branded landing banner for the home tab -- logo + wordmark + tagline on
+// the brand gradient, so opening the app reads as a designed product rather
+// than a bare list of cards.
+@Composable
+private fun HomeHeroHeader() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(Brush.linearGradient(listOf(BrandGradientStart, BrandGradientEnd)))
+            .padding(20.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AppLogo(size = 52.dp)
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    "Digital Wellbeing",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "Understand your habits, on your terms",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.88f)
+                )
+            }
+        }
     }
 }
 

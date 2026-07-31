@@ -21,3 +21,9 @@ val SuggestionAccentColors = listOf(
     Color(0xFF1E88E5),
     Color(0xFF00897B),
 )
+
+// Brand gradient for the logo and home header -- reuses the first/last
+// SuggestionAccentColors so the mark and the in-app accents read as one
+// consistent palette instead of introducing a fourth unrelated color pair.
+val BrandGradientStart = Color(0xFF6A4C93)
+val BrandGradientEnd = Color(0xFF00897B)
